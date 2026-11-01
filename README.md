@@ -1,70 +1,78 @@
-# Getting Started with Create React App
+# Security Threat Simulation & Monitoring Dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Master's thesis project (MSc, Information Security of Telecommunication Systems, Azerbaijan Technical University, 2025).
 
-## Available Scripts
+A web platform that simulates common network and application attacks, records them as security events and shows them on a live threat dashboard. The whole stack — app, data stores and monitoring — starts with one `docker compose up`.
 
-In the project directory, you can run:
+Built by **Nijat Najafov** together with **Murad Huseynli**.
 
-### `npm start`
+## What it does
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **Attack simulations:** interactive DDoS, man-in-the-middle (MITM), SQL injection and malware file-upload scenarios.
+- **Threat intelligence dashboard:** threat counts, severity breakdown and trends (Recharts).
+- **Security logs:** security event log backed by PostgreSQL.
+- **Monitoring:** Prometheus scrapes the host, Redis and the app; Grafana visualises it.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Architecture
 
-### `npm test`
+```
+Browser ──► Frontend (React 19, Tailwind, served by Nginx)  :3000
+                │
+                ▼
+           Backend API (Node.js / Express)                  :8000
+             │                     │
+             ▼                     ▼
+   PostgreSQL 15 (threats, logs)   Redis 7 (cache, demo store)
+             ▲                     ▲
+             │                     │
+   pgAdmin :5050         Redis Commander :8081
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Prometheus :9090 ◄── node-exporter :9100, redis-exporter :9121
+     │
+     ▼
+Grafana :3001
+```
 
-### `npm run build`
+| Layer | Tech |
+|---|---|
+| Frontend | React 19, React Router 7, Tailwind CSS, Framer Motion, Recharts |
+| Backend | Node.js, Express, `pg`, `redis` |
+| Data | PostgreSQL 15 (schemas `security`, `logs`), Redis 7 (AOF persistence) |
+| Containers | Multi-stage Dockerfile (Node build → Nginx), Docker Compose with health checks |
+| Monitoring | Prometheus, Grafana (provisioned datasources), node-exporter, redis-exporter |
+| CI | GitHub Actions (Node 18 / 20 matrix: install, lint, build), Snyk dependency checks |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## API
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/health` | service, database and Redis health |
+| GET / POST | `/api/threats` | list or record threats |
+| GET | `/api/threats/stats` | aggregated threat statistics |
+| GET | `/api/logs` | security event log |
+| GET | `/api/dashboard/metrics` | dashboard metrics |
+| GET / POST / DELETE | `/api/redis/*` | Redis demo: stats, set, get, keys, delete |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Run locally
 
-### `npm run eject`
+```bash
+docker compose up -d --build
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+| Service | URL |
+|---|---|
+| App | http://localhost:3000 |
+| API | http://localhost:8000/health |
+| Grafana | http://localhost:3001 |
+| Prometheus | http://localhost:9090 |
+| pgAdmin | http://localhost:5050 |
+| Redis Commander | http://localhost:8081 |
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Credentials in `docker-compose.yml` are demo values for local use only.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Frontend only, without Docker:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+npm ci
+npm start
+```
