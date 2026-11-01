@@ -4,7 +4,7 @@ Master's thesis project (MSc, Information Security of Telecommunication Systems,
 
 A web platform that simulates common network and application attacks, records them as security events and shows them on a live threat dashboard. The whole stack — app, data stores and monitoring — starts with one `docker compose up`.
 
-Built by **Nijat Najafov** together with **Murad Huseynli**.
+Built by **Nijat Najafov** together with **Murad Huseynli** ([@Shin778](https://github.com/Shin778)).
 
 ## What it does
 
